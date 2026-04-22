@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AI Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>AI Chat</h1>
+            <p class="subtitle">Local LLM Interface</p>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="text" id="username" placeholder="Username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <p id="error" class="error"></p>
+            </form>
+            
+            <p class="hint">Demo credentials: demo / demo2024</p>
+        </div>
+    </div>
+
+    <script>
+        // Check if already logged in
+        fetch('/api/me')
+            .then(r => { if (r.ok) location.href = '/app.html'; })
+            .catch(() => {});
+
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const error = document.getElementById('error');
+            error.textContent = '';
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                
+                if (res.ok) {
+                    location.href = '/app.html';
+                } else {
+                    const data = await res.json();
+                    error.textContent = data.detail || 'Invalid credentials';
+                }
+            } catch (err) {
+                error.textContent = 'Connection error. Please try again.';
+            }
+        };
+    </script>
+</body>
+</html>

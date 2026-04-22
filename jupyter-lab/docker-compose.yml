@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  jupyter:
+    build: .
+    container_name: jupyter-lab
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/notebooks
+      - ./data:/data
+      - ./outputs:/outputs
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    restart: unless-stopped
+    networks:
+      - poc-net
+    
+    # GPU support - uncomment when NVIDIA Container Toolkit is installed
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+networks:
+  poc-net:
+    external: true
