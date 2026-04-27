@@ -24,4 +24,4 @@ echo "Using model: $MODEL_PATH"
 
 # Start llama-server with all arguments
 echo "Starting llama-server..."
-exec /app/llama.cpp/build/bin/llama-server --model "$MODEL_PATH" "$@"
+exec /app/llama-server --model "$MODEL_PATH" "$@"
