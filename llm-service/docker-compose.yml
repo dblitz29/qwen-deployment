@@ -8,11 +8,11 @@ services:
       - "8080:8080"
     volumes:
       # Mount your GGUF model file here
-      - ./models:/models:ro
+      - ./models:/models:rw
     environment:
-      - MODEL_PATH=/models/model.gguf
+      - MODEL_PATH=/models/qwen2.5-7b-instruct-q4_k_m.gguf
     command: >
-      --model ${MODEL_PATH:-/models/model.gguf}
+      --model ${MODEL_PATH:-/models/qwen2.5-7b-instruct-q4_k_m.gguf}
       --host 0.0.0.0
       --port 8080
       --ctx-size 4096
