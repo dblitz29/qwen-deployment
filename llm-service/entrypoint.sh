@@ -23,15 +23,13 @@ if [ -z "$GGUF_FILES" ]; then
     exit 1
 fi
 
-# Check if any file has the split pattern
-SPLIT_PATTERN="-00001-of-"
-
-if echo "$GGUF_FILES" | grep -q "$SPLIT_PATTERN"; then
+# Check if any file has the split pattern (use -- to separate options from args)
+if echo "$GGUF_FILES" | grep -q -- "-00001-of-"; then
     echo "Found split GGUF files. Merging..."
     
     # Find unique prefixes and merge ALL of them
     for FILE in $GGUF_FILES; do
-        if echo "$FILE" | grep -q "$SPLIT_PATTERN"; then
+        if echo "$FILE" | grep -q -- "-00001-of-"; then
             # Extract prefix: qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf -> qwen2.5-7b-instruct-q4_k_m
             PREFIX=$(echo "$FILE" | sed 's/-00001-of-.*\.gguf$//')
             OUTPUT="${PREFIX}.gguf"
