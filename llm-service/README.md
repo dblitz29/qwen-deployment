@@ -2,12 +2,19 @@
 
 OpenAI-compatible API for local LLM inference using llama.cpp server.
 
+## Features
+
+- OpenAI-compatible REST API
+- Automatic merge of split GGUF files
+- GPU acceleration with CUDA
+- Multi-model support
+
 ## Prerequisites
 
 - Docker and Docker Compose
 - NVIDIA GPU with drivers (for GPU acceleration)
 - NVIDIA Container Toolkit (for GPU in Docker)
-- GGUF model file
+- GGUF model file(s)
 
 ## Quick Start
 
@@ -17,10 +24,11 @@ Download a GGUF model from HuggingFace and place it in the `models/` directory:
 
 ```bash
 mkdir -p models
-# Example: Download Qwen2.5-7B-Instruct (smaller model for testing)
-# Visit: https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF
-# Download the Q4_K_M variant (~4.5GB)
+# Example: Download Qwen2.5-7B-Instruct (split files)
+huggingface-cli download Qwen/Qwen2.5-7B-Instruct-GGUF --local-dir models
 ```
+
+**Note:** If the model is split into multiple files (e.g., `*-00001-of-00002.gguf`), the service will automatically merge them on startup.
 
 ### 2. Start the Service
 
@@ -93,30 +101,26 @@ docker run --rm --gpus all nvidia/cuda:12.1-base-ubuntu22.04 nvidia-smi
 
 Uncomment the `deploy` section in `docker-compose.yml`.
 
-## Sample Request (Medical X-Ray)
+## Split GGUF Files
 
-```bash
-curl http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "local",
-    "messages": [
-      {"role": "system", "content": "You are a medical imaging assistant."},
-      {"role": "user", "content": "Interpret these chest X-ray findings: bilateral infiltrates, cardiomegaly, blunted costophrenic angles."}
-    ],
-    "temperature": 0.7,
-    "max_tokens": 500
-  }'
+Some models on HuggingFace are split into multiple files due to upload size limits. The service automatically detects and merges these files:
+
 ```
+qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf  ->  qwen2.5-7b-instruct-q4_k_m.gguf
+qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf  ->  (merged)
+```
+
+The merge happens on every container startup, so you can safely re-download split files and restart.
 
 ## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
 | Container won't start | Check `docker logs llm-service` |
-| Model not found | Verify model path in `models/` directory |
+| No GGUF files found | Verify model files in `models/` directory |
+| Merge fails | Check file permissions on `models/` |
 | GPU not detected | Run `nvidia-smi` to check drivers |
-| Out of memory | Use smaller quantized model (Q4_K_M) |
+| Out of memory | Use smaller quantized model (Q2_K, Q3_K_M) |
 | Slow inference | Enable GPU acceleration |
 
 ## Network Integration

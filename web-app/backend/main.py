@@ -11,8 +11,11 @@ app = FastAPI(title="AI Chat Backend")
 
 # Hardcoded test credentials for POC
 VALID_USER = "demo"
-VALID_PASS = "demo2024"
+VALID_PASS = "prodia2024"
 SESSION_COOKIE = "session"
+
+# Blocked keywords for guardrails
+BLOCKED_KEYWORDS = ["recipe", "cook", "code", "python", "joke", "story", "weather", "hello"]
 
 # LLM service URL from environment
 LLM_SERVICE_URL = os.getenv("LLM_SERVICE_URL", "http://llm-service:8080")
@@ -57,15 +60,24 @@ def me(request: Request):
     return {"authenticated": True}
 
 
-@app.post("/api/chat")
-async def chat(req: ChatRequest, request: Request):
-    """Send message to LLM and return response"""
+@app.post("/api/report")
+async def report(req: ChatRequest, request: Request):
+    """Generate report from findings using LLM"""
     check_auth(request)
     
     # Validate input
     message = req.message.strip()
     if not message:
-        raise HTTPException(status_code=400, detail="Please enter a message")
+        raise HTTPException(status_code=400, detail="Please enter findings")
+    
+    # Guardrails - block certain keywords
+    message_lower = message.lower()
+    for keyword in BLOCKED_KEYWORDS:
+        if keyword in message_lower:
+            raise HTTPException(
+                status_code=400, 
+                detail="This service is for X-ray interpretation only"
+            )
     
     # Call LLM service
     try:

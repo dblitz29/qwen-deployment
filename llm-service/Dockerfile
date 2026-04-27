@@ -1,17 +1,17 @@
-# LLM Inference Service - Uses llama.cpp server directly
-# No custom code needed - llama-server provides OpenAI-compatible API
-
+# LLM Inference Service - Uses llama.cpp server
 FROM ghcr.io/ggml-org/llama.cpp:server-cuda
 
-# Model will be mounted at runtime via volume
+# Install Python for merge script
+RUN apt-get update && apt-get install -y python3 && rm -rf /var/lib/apt/lists/*
+
+# Create entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Model directory
 VOLUME /models
 
 EXPOSE 8080
 
-# Default command - model path can be overridden via environment
-# --ctx-size: context window size
-# --host: bind to all interfaces for Docker networking
-CMD ["--model", "/models/model.gguf", \
-     "--host", "0.0.0.0", \
-     "--port", "8080", \
-     "--ctx-size", "4096"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["--host", "0.0.0.0", "--port", "8080", "--ctx-size", "4096"]
