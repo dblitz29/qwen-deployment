@@ -9,13 +9,6 @@ OpenAI-compatible API for local LLM inference using llama.cpp server.
 - GPU acceleration with CUDA
 - Multi-model support
 
-## Prerequisites
-
-- Docker and Docker Compose
-- NVIDIA GPU with drivers (for GPU acceleration)
-- NVIDIA Container Toolkit (for GPU in Docker)
-- GGUF model file(s)
-
 ## Quick Start
 
 ### 1. Download a Model
@@ -23,14 +16,22 @@ OpenAI-compatible API for local LLM inference using llama.cpp server.
 Download a GGUF model from HuggingFace and place it in the `models/` directory:
 
 ```bash
-mkdir -p models
+mkdir -p models/qwen2.5-7b-instruct
 # Example: Download Qwen2.5-7B-Instruct (split files)
-huggingface-cli download Qwen/Qwen2.5-7B-Instruct-GGUF --local-dir models
+huggingface-cli download Qwen/Qwen2.5-7B-Instruct-GGUF --local-dir models/qwen2.5-7b-instruct
 ```
 
 **Note:** If the model is split into multiple files (e.g., `*-00001-of-00002.gguf`), the service will automatically merge them on startup.
 
-### 2. Start the Service
+### 2. Configure Model Path
+
+Edit `.env` to set your model:
+
+```bash
+MODEL_PATH=/models/qwen2.5-7b-instruct/model.gguf
+```
+
+### 3. Start the Service
 
 ```bash
 # CPU only (no GPU)
@@ -40,7 +41,7 @@ docker-compose up -d
 docker-compose up -d
 ```
 
-### 3. Test the API
+### 4. Test the API
 
 ```bash
 # List models
@@ -57,60 +58,51 @@ curl http://localhost:8080/v1/chat/completions \
   }'
 ```
 
-## API Endpoints
+## Switching Models
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/v1/models` | List available models |
-| POST | `/v1/chat/completions` | Chat completion (OpenAI format) |
-| GET | `/health` | Health check |
+To switch to a different model:
 
-## GPU Setup (Ubuntu 22.04)
-
-### Install NVIDIA Drivers
-
+1. Download the new model to a new subdirectory:
 ```bash
-sudo apt update
-sudo apt install -y nvidia-driver-535
-sudo reboot
+mkdir -p models/qwen2.5-32b-instruct
+huggingface-cli download Qwen/Qwen2.5-32B-Instruct-GGUF --local-dir models/qwen2.5-32b-instruct
 ```
 
-### Install NVIDIA Container Toolkit
-
+2. Update `.env`:
 ```bash
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
-  sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-
-curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-
-sudo apt update
-sudo apt install -y nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
+MODEL_PATH=/models/qwen2.5-32b-instruct/model.gguf
 ```
 
-### Verify GPU Access
-
+3. Restart the service:
 ```bash
-docker run --rm --gpus all nvidia/cuda:12.1-base-ubuntu22.04 nvidia-smi
+docker-compose restart llm-service
 ```
-
-### Enable GPU in docker-compose.yml
-
-Uncomment the `deploy` section in `docker-compose.yml`.
 
 ## Split GGUF Files
 
 Some models on HuggingFace are split into multiple files due to upload size limits. The service automatically detects and merges these files:
 
 ```
-qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf  ->  qwen2.5-7b-instruct-q4_k_m.gguf
-qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf  ->  (merged)
+models/qwen2.5-7b-instruct/
+├── qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf  -> merged to model.gguf
+├── qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf  -> merged to model.gguf
+└── model.gguf (after merge)
 ```
 
 The merge happens on every container startup, so you can safely re-download split files and restart.
+
+## Available Models
+
+| Model | Size | Quantization | Notes |
+|-------|------|--------------|-------|
+| Qwen2.5-1.5B | ~1.5B | Q2_K, Q3_K_M, Q4_K_M, Q5_K_M, Q8_0 | Fast, low memory |
+| Qwen2.5-7B | ~7B | Q2_K, Q3_K_M, Q4_K_M, Q5_K_M, Q8_0 | Good balance |
+| Qwen2.5-32B | ~32B | Q2_K, Q3_K_M, Q4_K_M, Q5_K_M, Q8_0 | High quality |
+| Qwen3-7B | ~7B | Q2_K, Q3_K_M, Q4_K_M, Q5_K_M, Q8_0 | Latest version |
+
+## GPU Setup
+
+See [GPU Setup Guide](../docs/gpu-setup.md)
 
 ## Troubleshooting
 
@@ -118,11 +110,7 @@ The merge happens on every container startup, so you can safely re-download spli
 |-------|----------|
 | Container won't start | Check `docker logs llm-service` |
 | No GGUF files found | Verify model files in `models/` directory |
+| Model file not found | Check `MODEL_PATH` in `.env` |
 | Merge fails | Check file permissions on `models/` |
-| GPU not detected | Run `nvidia-smi` to check drivers |
 | Out of memory | Use smaller quantized model (Q2_K, Q3_K_M) |
 | Slow inference | Enable GPU acceleration |
-
-## Network Integration
-
-This service runs on the `poc-net` Docker network. Other services (web-app) can reach it at `http://llm-service:8080`.

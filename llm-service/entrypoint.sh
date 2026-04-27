@@ -13,7 +13,6 @@ if [ ! -d "/models" ]; then
     exit 1
 fi
 
-# Find all unique model prefixes (files ending with -00001-of-xxxxx.gguf)
 echo "Checking for split GGUF files..."
 
 # Get list of all .gguf files
@@ -30,7 +29,7 @@ SPLIT_PATTERN="-00001-of-"
 if echo "$GGUF_FILES" | grep -q "$SPLIT_PATTERN"; then
     echo "Found split GGUF files. Merging..."
     
-    # Find unique prefixes (files ending with -00001-of-xxxxx.gguf)
+    # Find unique prefixes and merge ALL of them
     for FILE in $GGUF_FILES; do
         if echo "$FILE" | grep -q "$SPLIT_PATTERN"; then
             # Extract prefix: qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf -> qwen2.5-7b-instruct-q4_k_m
@@ -39,12 +38,8 @@ if echo "$GGUF_FILES" | grep -q "$SPLIT_PATTERN"; then
             
             echo "Merging: ${PREFIX}-*.gguf -> ${OUTPUT}"
             
-            # Use llama-gguf-split to merge
-            if command -v llama-gguf-split &> /dev/null; then
-                /app/llama.cpp/build/bin/llama-gguf-split --merge "$FILE" "$OUTPUT"
-            else
-                # Fallback: use Python to merge binary files
-                python3 << EOF
+            # Use Python to merge binary files
+            python3 << EOF
 import os
 import glob
 
@@ -65,11 +60,6 @@ with open("${OUTPUT}", 'wb') as outfile:
 
 print(f"Merged to: ${OUTPUT}")
 EOF
-            fi
-            
-            # Only merge the first split we find
-            # (assuming all splits are for the same model)
-            break
         fi
     done
     
@@ -78,6 +68,21 @@ else
     echo "No split files found. Using existing GGUF files."
 fi
 
+# Validate MODEL_PATH exists
+if [ -z "$MODEL_PATH" ]; then
+    echo "ERROR: MODEL_PATH environment variable not set"
+    exit 1
+fi
+
+if [ ! -f "$MODEL_PATH" ]; then
+    echo "ERROR: Model file not found at $MODEL_PATH"
+    echo "Available files in /models:"
+    find /models -name "*.gguf" -type f 2>/dev/null | head -20
+    exit 1
+fi
+
+echo "Using model: $MODEL_PATH"
+
 # Start llama-server with all arguments
 echo "Starting llama-server..."
-exec /app/llama.cpp/build/bin/llama-server "$@"
+exec /app/llama.cpp/build/bin/llama-server --model "$MODEL_PATH" "$@"
