@@ -26,4 +26,5 @@ services:
 
 networks:
   poc-net:
+    name: llm-service_poc-net
     external: true
