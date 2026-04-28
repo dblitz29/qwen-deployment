@@ -34,7 +34,7 @@ docker-compose up -d
 
 Open browser: `http://localhost`
 
-**Test credentials:** `demo` / `prodia2024`
+**Test credentials:** `demo` / `demo2024`
 
 ## API Endpoints
 
@@ -52,7 +52,7 @@ Open browser: `http://localhost`
 ```bash
 curl -X POST http://localhost/api/login \
   -H "Content-Type: application/json" \
-  -d '{"username": "demo", "password": "prodia2024"}' \
+  -d '{"username": "demo", "password": "demo2024"}' \
   -c cookies.txt
 ```
 

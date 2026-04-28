@@ -1,4 +1,4 @@
-# Prodia AI/ML Technical POC
+# AI/ML Technical POC
 
 Proof of concept for AI/ML use cases in a containerized environment.
 
@@ -81,7 +81,7 @@ curl http://localhost:80
 ## Project Structure
 
 ```
-prodia-poc/
+ai-ml-poc/
 ├── llm-service/          # LLM Inference Service
 │   ├── Dockerfile
 │   ├── docker-compose.yml
@@ -109,4 +109,4 @@ prodia-poc/
 
 ## License
 
-Private - Prodia POC
+Private - AI/ML POC

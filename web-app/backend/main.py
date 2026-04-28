@@ -11,7 +11,7 @@ app = FastAPI(title="X-Ray Report Backend")
 
 # Hardcoded test credentials for POC
 VALID_USER = "demo"
-VALID_PASS = "prodia2024"
+VALID_PASS = "demo2024"
 SESSION_COOKIE = "session"
 
 # Blocked keywords for guardrails
