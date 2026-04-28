@@ -1,5 +1,5 @@
 """
-Web Chat Backend - Simple LLM chat interface
+Web Report Backend - X-ray Report Generation
 """
 
 from fastapi import FastAPI, HTTPException, Response, Request
@@ -7,7 +7,7 @@ from pydantic import BaseModel
 import httpx
 import os
 
-app = FastAPI(title="AI Chat Backend")
+app = FastAPI(title="X-Ray Report Backend")
 
 # Hardcoded test credentials for POC
 VALID_USER = "demo"
@@ -26,8 +26,8 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class ChatRequest(BaseModel):
-    message: str
+class ReportRequest(BaseModel):
+    findings: str
 
 
 def check_auth(request: Request):
@@ -61,19 +61,19 @@ def me(request: Request):
 
 
 @app.post("/api/report")
-async def report(req: ChatRequest, request: Request):
-    """Generate report from findings using LLM"""
+async def report(req: ReportRequest, request: Request):
+    """Generate X-ray report from findings using LLM"""
     check_auth(request)
     
     # Validate input
-    message = req.message.strip()
-    if not message:
+    findings = req.findings.strip()
+    if not findings:
         raise HTTPException(status_code=400, detail="Please enter findings")
     
     # Guardrails - block certain keywords
-    message_lower = message.lower()
+    findings_lower = findings.lower()
     for keyword in BLOCKED_KEYWORDS:
-        if keyword in message_lower:
+        if keyword in findings_lower:
             raise HTTPException(
                 status_code=400, 
                 detail="This service is for X-ray interpretation only"
@@ -87,7 +87,8 @@ async def report(req: ChatRequest, request: Request):
                 json={
                     "model": "local",
                     "messages": [
-                        {"role": "user", "content": message}
+                        {"role": "system", "content": "You are a medical imaging assistant. Interpret X-ray findings and provide a professional radiology report."},
+                        {"role": "user", "content": findings}
                     ],
                     "temperature": 0.7,
                     "max_tokens": 1000
@@ -102,7 +103,7 @@ async def report(req: ChatRequest, request: Request):
             
             data = response.json()
             content = data["choices"][0]["message"]["content"]
-            return {"response": content}
+            return {"interpretation": content}
             
     except httpx.TimeoutException:
         raise HTTPException(

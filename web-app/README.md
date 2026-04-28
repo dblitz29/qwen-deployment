@@ -1,74 +1,104 @@
-# Web Chat Application
+# Web Report App
 
-Simple web interface for interacting with a local LLM.
+X-ray report generation web application with AI-powered interpretation.
 
-## Prerequisites
+## Features
 
-- Docker and Docker Compose
-- LLM Service running (see `../llm-service/`)
+- Simple authentication (hardcoded test credentials)
+- X-ray findings input with AI interpretation
+- Guardrails to prevent misuse
+- OpenAI-compatible LLM integration
 
 ## Quick Start
 
-### 1. Create Docker Network (if not exists)
+### Prerequisites
 
-```bash
-docker network create poc-net
-```
+- Docker and Docker Compose
+- LLM Service running (Use Case 1)
 
-### 2. Start LLM Service First
+### 1. Start LLM Service First
 
 ```bash
 cd ../llm-service
 docker-compose up -d
 ```
 
-### 3. Start Web App
+### 2. Start Web App
 
 ```bash
-cd ../web-app
+cd web-app
 docker-compose up -d
 ```
 
-### 4. Access the Application
+### 3. Access the App
 
-Open http://localhost in your browser.
+Open browser: `http://localhost`
 
-**Test Credentials:**
-- Username: `demo`
-- Password: `demo2024`
-
-## Architecture
-
-```
-Browser -> Nginx (:80) -> Backend (:8001) -> LLM Service (:8080)
-              |
-         Static Files
-```
+**Test credentials:** `demo` / `prodia2024`
 
 ## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/login` | Authenticate user |
-| POST | `/api/logout` | End session |
-| GET | `/api/me` | Check auth status |
-| POST | `/api/chat` | Send message to LLM |
+| POST | `/api/login` | Login with credentials |
+| POST | `/api/logout` | Logout current user |
+| GET | `/api/me` | Check authentication status |
+| POST | `/api/report` | Generate X-ray report |
 
-## Testing with curl
+## API Examples
+
+### Login
 
 ```bash
-# Login
-curl -c cookies.txt -X POST http://localhost/api/login \
+curl -X POST http://localhost/api/login \
   -H "Content-Type: application/json" \
-  -d '{"username": "demo", "password": "demo2024"}'
+  -d '{"username": "demo", "password": "prodia2024"}' \
+  -c cookies.txt
+```
 
-# Send message
-curl -b cookies.txt -X POST http://localhost/api/chat \
+### Generate Report
+
+```bash
+curl -X POST http://localhost/api/report \
   -H "Content-Type: application/json" \
-  -d '{"message": "Hello, how are you?"}'
+  -b cookies.txt \
+  -d '{
+    "findings": "Bilateral infiltrates in the lower lobes. Cardiomegaly present. Blunted costophrenic angles suggesting pleural effusion."
+  }'
+```
 
-# Logout
-curl -b cookies.txt -X POST http://localhost/api/logout
+### Check Authentication
+
+```bash
+curl http://localhost/api/me -b cookies.txt
+```
+
+### Logout
+
+```bash
+curl -X POST http://localhost/api/logout -b cookies.txt
+```
+
+## Guardrails
+
+The following keywords are blocked to prevent misuse:
+
+- recipe, cook
+- code, python
+- joke, story
+- weather, hello
+
+If blocked keywords are detected, the API returns:
+```json
+{
+  "detail": "This service is for X-ray interpretation only"
+}
+```
+
+## Architecture
+
+```
+Browser → Nginx (port 80) → Backend (port 8001) → LLM Service (port 8080)
 ```
 
 ## File Structure
@@ -76,16 +106,16 @@ curl -b cookies.txt -X POST http://localhost/api/logout
 ```
 web-app/
 ├── backend/
-│   ├── main.py           # FastAPI app
+│   ├── main.py           # FastAPI backend
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── frontend/
 │   ├── index.html        # Login page
-│   ├── app.html          # Chat page
-│   ├── app.js            # App logic
+│   ├── app.html          # Report page
+│   ├── app.js            # Report logic
 │   └── style.css         # Styles
 ├── nginx/
-│   └── default.conf      # Nginx routing
+│   └── default.conf      # Nginx config
 ├── docker-compose.yml
 └── README.md
 ```
@@ -94,16 +124,11 @@ web-app/
 
 | Issue | Solution |
 |-------|----------|
-| Login fails | Check credentials: demo / demo2024 |
-| Chat fails | Ensure LLM service is running |
-| 502 Bad Gateway | Backend not started or crashed |
-| Timeout | LLM inference takes time, wait longer |
+| Cannot connect to LLM | Ensure llm-service is running |
+| 401 Unauthorized | Login first or check session cookie |
+| 400 Bad Request | Check for blocked keywords |
+| 502 Bad Gateway | LLM service unavailable |
 
-## Development
+## Network
 
-To modify the frontend, edit files in `frontend/` - changes are reflected immediately (volume mounted).
-
-To modify the backend, rebuild:
-```bash
-docker-compose up -d --build backend
-```
+This service connects to `poc-net` Docker network and communicates with `llm-service` at `http://llm-service:8080`.

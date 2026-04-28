@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat</title>
+    <title>X-Ray Report Generator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <h1>AI Chat</h1>
+        <h1>X-Ray Report Generator</h1>
         <button id="logout" class="btn btn-secondary">Logout</button>
     </header>
 
     <main class="container">
         <div class="card">
-            <h2>Enter your message</h2>
-            <textarea id="message" placeholder="Type your message here..."></textarea>
+            <h2>Enter X-Ray Findings</h2>
+            <textarea id="findings" placeholder="Enter X-ray findings here (e.g., bilateral infiltrates, cardiomegaly, blunted costophrenic angles)..."></textarea>
             
             <div class="actions">
-                <button id="send" class="btn btn-primary">Send</button>
+                <button id="generate" class="btn btn-primary">Generate Report</button>
                 <button id="clear" class="btn btn-secondary">Clear</button>
             </div>
             
@@ -26,7 +26,7 @@
         </div>
 
         <div class="card" id="result-card" style="display: none;">
-            <h2>Response</h2>
+            <h2>Interpretation</h2>
             <div id="result"></div>
         </div>
     </main>

@@ -11,59 +11,59 @@ document.getElementById('logout').onclick = async () => {
 
 // Clear handler
 document.getElementById('clear').onclick = () => {
-    document.getElementById('message').value = '';
+    document.getElementById('findings').value = '';
     document.getElementById('result').textContent = '';
     document.getElementById('result-card').style.display = 'none';
     document.getElementById('error').textContent = '';
 };
 
-// Send message handler
-document.getElementById('send').onclick = async () => {
-    const message = document.getElementById('message').value;
+// Generate report handler
+document.getElementById('generate').onclick = async () => {
+    const findings = document.getElementById('findings').value;
     const error = document.getElementById('error');
     const result = document.getElementById('result');
     const resultCard = document.getElementById('result-card');
-    const sendBtn = document.getElementById('send');
+    const generateBtn = document.getElementById('generate');
     
     error.textContent = '';
     
-    if (!message.trim()) {
-        error.textContent = 'Please enter a message';
+    if (!findings.trim()) {
+        error.textContent = 'Please enter X-ray findings';
         return;
     }
     
     // Show loading state
-    sendBtn.disabled = true;
-    sendBtn.textContent = 'Sending...';
-    result.innerHTML = '<p class="loading">Generating response...</p>';
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating...';
+    result.innerHTML = '<p class="loading">Generating report...</p>';
     resultCard.style.display = 'block';
     
     try {
-        const res = await fetch('/api/chat', {
+        const res = await fetch('/api/report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ findings })
         });
         
         const data = await res.json();
         
         if (res.ok) {
             // Format the response with line breaks
-            result.innerHTML = data.response
+            result.innerHTML = data.interpretation
                 .split('\n')
                 .map(line => line.trim() ? `<p>${line}</p>` : '')
                 .join('');
         } else {
             result.textContent = '';
             resultCard.style.display = 'none';
-            error.textContent = data.detail || 'Error generating response';
+            error.textContent = data.detail || 'Error generating report';
         }
     } catch (err) {
         result.textContent = '';
         resultCard.style.display = 'none';
         error.textContent = 'Connection error. Please try again.';
     } finally {
-        sendBtn.disabled = false;
-        sendBtn.textContent = 'Send';
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate Report';
     }
 };

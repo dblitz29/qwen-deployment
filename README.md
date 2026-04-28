@@ -1,155 +1,112 @@
-# AI/ML Technical POC
+# Prodia AI/ML Technical POC
 
-Single-server proof of concept demonstrating three AI/ML use cases in a containerized environment.
+Proof of concept for AI/ML use cases in a containerized environment.
 
 ## Use Cases
 
-| Use Case | Description | Directory |
-|----------|-------------|-----------|
-| A | Local LLM Inference Service | `llm-service/` |
-| B | Web Report Application | `web-app/` |
-| C | JupyterLab GPU Environment | `jupyter-lab/` |
+### 1. LLM Inference Service ✅
+
+OpenAI-compatible API for local LLM inference.
+
+**Status:** Ready
+
+**Quick Start:**
+```bash
+cd llm-service
+docker-compose up -d
+curl http://localhost:8080/v1/models
+```
+
+**Documentation:** [docs/llm-service-setup.md](docs/llm-service-setup.md)
+
+### 2. Web Report App 🚧
+
+Web application with authentication and report generation.
+
+**Status:** In Progress
+
+### 3. JupyterLab GPU Experimentation 🚧
+
+Interactive notebook environment for ML experiments.
+
+**Status:** Pending
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Ubuntu 22.04 GPU Server                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
-│  │  Web App    │    │ LLM Service │    │ JupyterLab  │     │
-│  │   :80       │───▶│   :8080     │    │   :8888     │     │
-│  │  (nginx)    │    │(llama-server│    │  (PyTorch)  │     │
-│  └─────────────┘    └─────────────┘    └─────────────┘     │
-│         │                  │                  │             │
-│         └──────────────────┴──────────────────┘             │
-│                    Docker Network (poc-net)                 │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                   NVIDIA GPU                         │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                     Nginx (Port 80)                      │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │ Web App      │  │ LLM Service  │  │ JupyterLab   │  │
+│  │ (Port 8001)  │  │ (Port 8080)  │  │ (Port 8888)  │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
 ```
+
+## Services
+
+| Service | Port | Status | Description |
+|---------|------|--------|-------------|
+| LLM Service | 8080 | ✅ Ready | OpenAI-compatible LLM API |
+| Web App | 80 | 🚧 In Progress | Auth + Report generation |
+| JupyterLab | 8888 | 🚧 Pending | GPU notebook environment |
 
 ## Quick Start
 
-### Prerequisites
-
-- Ubuntu 22.04 LTS
-- Docker & Docker Compose
-- NVIDIA GPU with drivers
-- NVIDIA Container Toolkit
-
-### 1. Clone and Setup
+### Start All Services
 
 ```bash
-git clone <repository>
-cd ai-ml-poc
+# Start LLM Service
+cd llm-service
+docker-compose up -d
+
+# Start Web App (when ready)
+cd ../web-app
+docker-compose up -d
 ```
 
-### 2. Create Docker Network
+### Verify Services
 
 ```bash
-docker network create poc-net
+# LLM Service
+curl http://localhost:8080/v1/models
+
+# Web App (when ready)
+curl http://localhost:80
 ```
-
-### 3. Download LLM Model
-
-```bash
-mkdir -p llm-service/models
-# Download a GGUF model (e.g., Qwen2.5-7B-Instruct-Q4_K_M.gguf)
-# Place in llm-service/models/model.gguf
-```
-
-### 4. Start All Services
-
-```bash
-# Start LLM service first
-cd llm-service && docker-compose up -d && cd ..
-
-# Start web app
-cd web-app && docker-compose up -d && cd ..
-
-# Start JupyterLab
-cd jupyter-lab && docker-compose up -d && cd ..
-```
-
-### 5. Access Services
-
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Web App | http://localhost | demo / demo2024 |
-| LLM API | http://localhost:8080 | - |
-| JupyterLab | http://localhost:8888 | - |
 
 ## Project Structure
 
 ```
-ai-ml-poc/
-├── llm-service/           # Use Case A: LLM Inference
+prodia-poc/
+├── llm-service/          # LLM Inference Service
 │   ├── Dockerfile
 │   ├── docker-compose.yml
-│   ├── models/            # Place GGUF models here
-│   └── README.md
-│
-├── web-app/               # Use Case B: Web Application
+│   ├── entrypoint.sh
+│   ├── .env.example
+│   └── models/           # GGUF model files
+├── web-app/              # Web Application
 │   ├── backend/
-│   │   ├── main.py        # FastAPI backend
-│   │   └── Dockerfile
 │   ├── frontend/
-│   │   ├── index.html     # Login page
-│   │   ├── app.html       # Report page
-│   │   └── style.css
-│   ├── nginx/
-│   │   └── default.conf
-│   ├── docker-compose.yml
-│   └── README.md
-│
-├── jupyter-lab/           # Use Case C: GPU Experimentation
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── notebooks/         # Sample notebooks
-│   ├── data/              # Datasets
-│   ├── outputs/           # Model outputs
-│   └── README.md
-│
-├── docs/                  # Documentation
-│   ├── deployment.md
-│   ├── gpu-setup.md
-│   └── troubleshooting.md
-│
-└── README.md              # This file
+│   └── docker-compose.yml
+├── jupyter-lab/          # JupyterLab Environment
+│   └── docker-compose.yml
+└── docs/                 # Documentation
+    ├── llm-service-setup.md
+    ├── deployment.md
+    └── troubleshooting.md
 ```
 
-## Documentation
+## Requirements
 
-- [Deployment Guide](docs/deployment.md) - Full deployment instructions
-- [GPU Setup](docs/gpu-setup.md) - NVIDIA driver and container toolkit setup
-- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
-
-## Technology Stack
-
-| Component | Technology |
-|-----------|------------|
-| LLM Inference | llama.cpp (llama-server) |
-| Web Backend | Python, FastAPI |
-| Web Frontend | HTML, CSS, JavaScript |
-| Reverse Proxy | Nginx |
-| Containerization | Docker, Docker Compose |
-| GPU Support | NVIDIA Container Toolkit |
-| Target OS | Ubuntu 22.04 LTS |
-
-## Constraints
-
-This is a POC with intentional limitations:
-
-- Single server deployment only
-- Hardcoded test credentials
-- No persistent user sessions
-- No production security hardening
-- No high availability
+- Docker 20.10+
+- Docker Compose 2.0+
+- (Optional) NVIDIA GPU with drivers
+- (Optional) NVIDIA Container Toolkit
 
 ## License
 
-Internal use only - AI/ML Technical POC
+Private - Prodia POC
