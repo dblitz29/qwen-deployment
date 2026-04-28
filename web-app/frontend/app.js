@@ -3,39 +3,64 @@ fetch('/api/me')
     .then(r => { if (!r.ok) location.href = '/'; })
     .catch(() => location.href = '/');
 
+// Page navigation
+function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.btn-link').forEach(b => b.classList.remove('active'));
+    
+    if (page === 'dashboard') {
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('nav-dashboard').classList.add('active');
+    } else if (page === 'report') {
+        document.getElementById('report-page').classList.add('active');
+        document.getElementById('nav-report').classList.add('active');
+    } else if (page === 'chat') {
+        document.getElementById('chat-page').classList.add('active');
+        document.getElementById('nav-chat').classList.add('active');
+    }
+}
+
+// Make showPage global
+window.showPage = showPage;
+
+// Nav buttons
+document.getElementById('nav-dashboard').onclick = () => showPage('dashboard');
+document.getElementById('nav-report').onclick = () => showPage('report');
+document.getElementById('nav-chat').onclick = () => showPage('chat');
+
 // Logout handler
 document.getElementById('logout').onclick = async () => {
     await fetch('/api/logout', { method: 'POST' });
     location.href = '/';
 };
 
-// Clear handler
-document.getElementById('clear').onclick = () => {
-    document.getElementById('findings').value = '';
-    document.getElementById('result').textContent = '';
-    document.getElementById('result-card').style.display = 'none';
-    document.getElementById('error').textContent = '';
+// ============ X-RAY REPORT ============
+const findingsInput = document.getElementById('findings');
+const generateBtn = document.getElementById('generate');
+const clearBtn = document.getElementById('clear');
+const resultCard = document.getElementById('result-card');
+const resultDiv = document.getElementById('result');
+const errorP = document.getElementById('error');
+
+clearBtn.onclick = () => {
+    findingsInput.value = '';
+    resultDiv.textContent = '';
+    resultCard.style.display = 'none';
+    errorP.textContent = '';
 };
 
-// Generate report handler
-document.getElementById('generate').onclick = async () => {
-    const findings = document.getElementById('findings').value;
-    const error = document.getElementById('error');
-    const result = document.getElementById('result');
-    const resultCard = document.getElementById('result-card');
-    const generateBtn = document.getElementById('generate');
+generateBtn.onclick = async () => {
+    const findings = findingsInput.value.trim();
+    errorP.textContent = '';
     
-    error.textContent = '';
-    
-    if (!findings.trim()) {
-        error.textContent = 'Please enter X-ray findings';
+    if (!findings) {
+        errorP.textContent = 'Please enter X-ray findings';
         return;
     }
     
-    // Show loading state
     generateBtn.disabled = true;
     generateBtn.textContent = 'Generating...';
-    result.innerHTML = '<p class="loading">Generating report...</p>';
+    resultDiv.innerHTML = '<p class="loading">Generating report...</p>';
     resultCard.style.display = 'block';
     
     try {
@@ -48,22 +73,67 @@ document.getElementById('generate').onclick = async () => {
         const data = await res.json();
         
         if (res.ok) {
-            // Format the response with line breaks
-            result.innerHTML = data.interpretation
+            resultDiv.innerHTML = data.interpretation
                 .split('\n')
                 .map(line => line.trim() ? `<p>${line}</p>` : '')
                 .join('');
         } else {
-            result.textContent = '';
+            resultDiv.textContent = '';
             resultCard.style.display = 'none';
-            error.textContent = data.detail || 'Error generating report';
+            errorP.textContent = data.detail || 'Error generating report';
         }
     } catch (err) {
-        result.textContent = '';
+        resultDiv.textContent = '';
         resultCard.style.display = 'none';
-        error.textContent = 'Connection error. Please try again.';
+        errorP.textContent = 'Connection error. Please try again.';
     } finally {
         generateBtn.disabled = false;
         generateBtn.textContent = 'Generate Report';
     }
 };
+
+// ============ CHAT ============
+const chatMessages = document.getElementById('chat-messages');
+const messageInput = document.getElementById('message');
+const sendBtn = document.getElementById('send');
+
+function addMessage(text, isUser) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+    msgDiv.innerHTML = `<div class="bubble">${text}</div>`;
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function sendMessage() {
+    const message = messageInput.value.trim();
+    if (!message) return;
+    
+    addMessage(message, true);
+    messageInput.value = '';
+    sendBtn.disabled = true;
+    
+    try {
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            addMessage(data.response, false);
+        } else {
+            addMessage('Error: ' + (data.detail || 'Something went wrong'), false);
+        }
+    } catch (err) {
+        addMessage('Connection error. Please try again.', false);
+    } finally {
+        sendBtn.disabled = false;
+        messageInput.focus();
+    }
+}
+
+sendBtn.onclick = sendMessage;
+messageInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };

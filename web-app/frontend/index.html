@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - X-Ray Report</title>
+    <title>Login - AI Assistant</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1>X-Ray Report Generator</h1>
-            <p class="subtitle">AI-Powered Radiology Assistant</p>
+            <h1>AI Assistant</h1>
+            <p class="subtitle">X-Ray Report & Chat</p>
             
             <form id="login-form">
                 <div class="form-group">
@@ -22,13 +22,10 @@
                 <button type="submit" class="btn btn-primary">Login</button>
                 <p id="error" class="error"></p>
             </form>
-            
-
         </div>
     </div>
 
     <script>
-        // Check if already logged in
         fetch('/api/me')
             .then(r => { if (r.ok) location.href = '/app.html'; })
             .catch(() => {});

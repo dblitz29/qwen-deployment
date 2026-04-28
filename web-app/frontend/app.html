@@ -3,31 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X-Ray Report Generator</title>
+    <title>AI Assistant</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <h1>X-Ray Report Generator</h1>
-        <button id="logout" class="btn btn-secondary">Logout</button>
+        <h1>AI Assistant</h1>
+        <div class="header-nav">
+            <button id="nav-dashboard" class="btn btn-link active">Dashboard</button>
+            <button id="nav-report" class="btn btn-link">X-Ray Report</button>
+            <button id="nav-chat" class="btn btn-link">Chat</button>
+            <button id="logout" class="btn btn-secondary">Logout</button>
+        </div>
     </header>
 
-    <main class="container">
-        <div class="card">
-            <h2>Enter X-Ray Findings</h2>
-            <textarea id="findings" placeholder="Enter X-ray findings here (e.g., bilateral infiltrates, cardiomegaly, blunted costophrenic angles)..."></textarea>
+    <!-- Dashboard -->
+    <main id="dashboard" class="page active">
+        <div class="container">
+            <h2>Welcome to AI Assistant</h2>
+            <p class="subtitle">Choose a feature to get started</p>
             
-            <div class="actions">
-                <button id="generate" class="btn btn-primary">Generate Report</button>
-                <button id="clear" class="btn btn-secondary">Clear</button>
+            <div class="feature-cards">
+                <div class="feature-card" onclick="showPage('report')">
+                    <div class="feature-icon">📋</div>
+                    <h3>X-Ray Report</h3>
+                    <p>Generate professional radiology reports from X-ray findings</p>
+                </div>
+                <div class="feature-card" onclick="showPage('chat')">
+                    <div class="feature-icon">💬</div>
+                    <h3>AI Chat</h3>
+                    <p>Chat with AI assistant for general questions</p>
+                </div>
             </div>
-            
-            <p id="error" class="error"></p>
         </div>
+    </main>
 
-        <div class="card" id="result-card" style="display: none;">
-            <h2>Interpretation</h2>
-            <div id="result"></div>
+    <!-- X-Ray Report Page -->
+    <main id="report-page" class="page">
+        <div class="container">
+            <div class="card">
+                <h2>Enter X-Ray Findings</h2>
+                <textarea id="findings" placeholder="Enter X-ray findings here (e.g., bilateral infiltrates, cardiomegaly, blunted costophrenic angles)..."></textarea>
+                
+                <div class="actions">
+                    <button id="generate" class="btn btn-primary">Generate Report</button>
+                    <button id="clear" class="btn btn-secondary">Clear</button>
+                </div>
+                
+                <p id="error" class="error"></p>
+            </div>
+
+            <div class="card" id="result-card" style="display: none;">
+                <h2>Interpretation</h2>
+                <div id="result"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Chat Page -->
+    <main id="chat-page" class="page">
+        <div class="chat-container">
+            <div id="chat-messages" class="chat-messages"></div>
+            
+            <div class="chat-input">
+                <input type="text" id="message" placeholder="Type your message..." />
+                <button id="send" class="btn btn-primary">Send</button>
+            </div>
         </div>
     </main>
 
